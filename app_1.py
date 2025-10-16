@@ -792,12 +792,6 @@ def render_ws5_tracking_form(selected_project_id: str):
     return add, payload
 
 # =========================
-# Set proxy
-# =========================
-os.environ['http_proxy']  = 'http://squid18.localdom.net:3128'
-os.environ['https_proxy'] = 'http://squid18.localdom.net:3128'
-
-# =========================
 # Config
 # =========================
 PARENT_TABLE = "Projekt_Data" 
@@ -1242,3 +1236,4 @@ if st.button("Sign out"):
     logout()
     st.query_params.clear()
     rerun()
+
