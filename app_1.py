@@ -958,7 +958,7 @@ with tab1:
     edited = st.data_editor(
         df[cols_display],
         num_rows="fixed",                # prevent adding rows from UI
-        use_container_width=True,
+        width="stretch",
         hide_index=True,                 # id stays hidden
     )
 
@@ -1236,4 +1236,5 @@ if st.button("Sign out"):
     logout()
     st.query_params.clear()
     rerun()
+
 
