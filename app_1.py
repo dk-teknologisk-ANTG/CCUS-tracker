@@ -1149,84 +1149,85 @@ with tab2:
 # =========================
 # Tab 3: Visualisations (ADMIN ONLY) — projekt status
 # =========================
-with tab3:
-    st.markdown("### Status på projekter ")
-
-    # Projekter
-    proj = supabase.table("Projekt_Data").select("*").execute().data or []
-    if not proj:
-        st.info("Ingen projekter fundet.")
-        st.stop()
-    projects_df = pd.DataFrame(proj)
-
-    # Tjek kolonner
-    if "id" not in projects_df.columns or "Workstream" not in projects_df.columns:
-        st.error("Projekt_Data skal have kolonnerne 'id' og 'Workstream'.")
-        st.stop()
-
-    # Find projekt-navn kolonne (præference: 'ProjektNavn')
-    name_col = "ProjektNavn" if "ProjektNavn" in projects_df.columns else \
-               next((c for c in ["Projekt_Navn","Project_Name","Name","title","navn"] if c in projects_df.columns), None)
-
-    # Hent seneste status fra alle tracking-tabeller
-    ws_tables = ["Tracking_WS1","Tracking_WS2","Tracking_WS3","Tracking_WS4","Tracking_WS5"]
-    latest_df = pd.concat([_latest_status_by_ws(t) for t in ws_tables], ignore_index=True) \
-                if ws_tables else pd.DataFrame(columns=["project_id","status","Timestamp","ws"])
-
-    # Merge så projekter UDEN status stadig vises (status=blank)
-    merged = projects_df.merge(
-        latest_df,
-        left_on=["id","Workstream"],
-        right_on=["project_id","ws"],
-        how="left",
-        suffixes=("","_latest")
-    )
-
-    # Byg visnings-DF
-    disp_cols = ["id", "Workstream"]
-    if name_col: disp_cols.insert(1, name_col)
-    disp_cols += ["status", "Timestamp"]
-
-    overview = merged[disp_cols].copy()
-    overview = overview.rename(columns={
-        "id": "Project ID",
-        "Workstream": "WS",
-        name_col if name_col else "Project": "ProjektNavn",
-        "status": "Status",
-        "Timestamp": "Last Update"
-    })
-
-    # Farv rækker efter Status
-    row_style_js = JsCode("""
-    function(params) {
-      const s = (params.data.Status || "").toLowerCase();
-      if (s.startsWith("green"))  { return {'background-color': '#e8f5e9'}; }   // light green
-      if (s.startsWith("yellow")) { return {'background-color': '#fff8e1'}; }   // light yellow
-      if (s.startsWith("red"))    { return {'background-color': '#ffebee'}; }   // light red
-      return null; // ingen status -> ingen farve
-    }
-    """)
-
-    gb = GridOptionsBuilder.from_dataframe(overview)
-    gb.configure_grid_options(getRowStyle=row_style_js.js_code)
-    gb.configure_columns({
-        "Project ID": {"headerName": "Project ID", "width": 60},
-        "WS": {"headerName": "WS", "width": 80, "type": ["numericColumn"]},
-        "ProjektNavn": {"headerName": "ProjektNavn", "width": 380},
-        "Status": {"headerName": "Status", "width": 340},
-        "Last Update": {"headerName": "Last Update", "width": 200}
-    })
-    gb.configure_selection("none")
-    gb.configure_side_bar(False)
-    grid = AgGrid(
-        overview,
-        gridOptions=gb.build(),
-        fit_columns_on_grid_load=True,
-        allow_unsafe_jscode=True,   # kræves for getRowStyle
-        theme="balham",
-        height=520,
-        width='stretch'  
-    )
+if IS_ADMIN:    
+    with tab3:
+            st.markdown("### Status på projekter ")
+        
+            # Projekter
+            proj = supabase.table("Projekt_Data").select("*").execute().data or []
+            if not proj:
+                st.info("Ingen projekter fundet.")
+                st.stop()
+            projects_df = pd.DataFrame(proj)
+        
+            # Tjek kolonner
+            if "id" not in projects_df.columns or "Workstream" not in projects_df.columns:
+                st.error("Projekt_Data skal have kolonnerne 'id' og 'Workstream'.")
+                st.stop()
+        
+            # Find projekt-navn kolonne (præference: 'ProjektNavn')
+            name_col = "ProjektNavn" if "ProjektNavn" in projects_df.columns else \
+                       next((c for c in ["Projekt_Navn","Project_Name","Name","title","navn"] if c in projects_df.columns), None)
+        
+            # Hent seneste status fra alle tracking-tabeller
+            ws_tables = ["Tracking_WS1","Tracking_WS2","Tracking_WS3","Tracking_WS4","Tracking_WS5"]
+            latest_df = pd.concat([_latest_status_by_ws(t) for t in ws_tables], ignore_index=True) \
+                        if ws_tables else pd.DataFrame(columns=["project_id","status","Timestamp","ws"])
+        
+            # Merge så projekter UDEN status stadig vises (status=blank)
+            merged = projects_df.merge(
+                latest_df,
+                left_on=["id","Workstream"],
+                right_on=["project_id","ws"],
+                how="left",
+                suffixes=("","_latest")
+            )
+        
+            # Byg visnings-DF
+            disp_cols = ["id", "Workstream"]
+            if name_col: disp_cols.insert(1, name_col)
+            disp_cols += ["status", "Timestamp"]
+        
+            overview = merged[disp_cols].copy()
+            overview = overview.rename(columns={
+                "id": "Project ID",
+                "Workstream": "WS",
+                name_col if name_col else "Project": "ProjektNavn",
+                "status": "Status",
+                "Timestamp": "Last Update"
+            })
+        
+            # Farv rækker efter Status
+            row_style_js = JsCode("""
+            function(params) {
+              const s = (params.data.Status || "").toLowerCase();
+              if (s.startsWith("green"))  { return {'background-color': '#e8f5e9'}; }   // light green
+              if (s.startsWith("yellow")) { return {'background-color': '#fff8e1'}; }   // light yellow
+              if (s.startsWith("red"))    { return {'background-color': '#ffebee'}; }   // light red
+              return null; // ingen status -> ingen farve
+            }
+            """)
+        
+            gb = GridOptionsBuilder.from_dataframe(overview)
+            gb.configure_grid_options(getRowStyle=row_style_js.js_code)
+            gb.configure_columns({
+                "Project ID": {"headerName": "Project ID", "width": 60},
+                "WS": {"headerName": "WS", "width": 80, "type": ["numericColumn"]},
+                "ProjektNavn": {"headerName": "ProjektNavn", "width": 380},
+                "Status": {"headerName": "Status", "width": 340},
+                "Last Update": {"headerName": "Last Update", "width": 200}
+            })
+            gb.configure_selection("none")
+            gb.configure_side_bar(False)
+            grid = AgGrid(
+                overview,
+                gridOptions=gb.build(),
+                fit_columns_on_grid_load=True,
+                allow_unsafe_jscode=True,   # kræves for getRowStyle
+                theme="balham",
+                height=520,
+                width='stretch'  
+            )
 
 # =========================
 # Sign out
@@ -1236,6 +1237,7 @@ if st.button("Sign out"):
     logout()
     st.query_params.clear()
     rerun()
+
 
 
 
