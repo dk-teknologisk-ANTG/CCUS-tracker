@@ -5,6 +5,27 @@ import streamlit as st
 from supabase import create_client, Client
 from datetime import date
 import altair as alt
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+
+def _latest_status_by_ws(table_name: str) -> pd.DataFrame:
+    try:
+        data = (
+            supabase.table(table_name)
+            .select("project_id,status,Timestamp")
+            .order("project_id", desc=False)
+            .order("Timestamp", desc=True)
+            .execute()
+            .data or []
+        )
+        if not data:
+            return pd.DataFrame(columns=["project_id","status","Timestamp","ws"])
+        d = pd.DataFrame(data)
+        d["ws"] = int(table_name[-1])  # antager 'Tracking_WSn'
+        d = d.sort_values(["project_id","Timestamp"], ascending=[True, False]).drop_duplicates("project_id", keep="first")
+        return d[["project_id","status","Timestamp","ws"]]
+    except Exception:
+        return pd.DataFrame(columns=["project_id","status","Timestamp","ws"])
+
 
 def key_factory(prefix: str, project_id: str):
     return lambda label: f"{prefix}:{project_id}:{label}"
@@ -1128,27 +1149,6 @@ with tab2:
 # =========================
 # Tab 3: Visualisations (ADMIN ONLY) — projekt status
 # =========================
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
-
-def _latest_status_by_ws(table_name: str) -> pd.DataFrame:
-    try:
-        data = (
-            supabase.table(table_name)
-            .select("project_id,status,Timestamp")
-            .order("project_id", desc=False)
-            .order("Timestamp", desc=True)
-            .execute()
-            .data or []
-        )
-        if not data:
-            return pd.DataFrame(columns=["project_id","status","Timestamp","ws"])
-        d = pd.DataFrame(data)
-        d["ws"] = int(table_name[-1])  # antager 'Tracking_WSn'
-        d = d.sort_values(["project_id","Timestamp"], ascending=[True, False]).drop_duplicates("project_id", keep="first")
-        return d[["project_id","status","Timestamp","ws"]]
-    except Exception:
-        return pd.DataFrame(columns=["project_id","status","Timestamp","ws"])
-
 with tab3:
     st.markdown("### Status på projekter ")
 
@@ -1236,5 +1236,6 @@ if st.button("Sign out"):
     logout()
     st.query_params.clear()
     rerun()
+
 
 
