@@ -1,6 +1,6 @@
 pandas
 streamlit
 supabase
-altair
-streamlit-aggrid
+openpyxl
+
 
