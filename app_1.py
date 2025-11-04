@@ -448,7 +448,7 @@ if not is_logged_in():
         email = st.text_input("Email")
         password = st.text_input("Password", type="password")
         ok = st.form_submit_button("Sign in")
-        st.markdown("If you have forgotten your login credentials contact antg@teknologisk.dk and you will receive an email with new credentials shortly")
+        st.markdown("If you have forgotten your login credentials contact kamam@inno-ccus.dtu.dk or kalin@inno-ccus.dtu.dk and you will receive an email with new credentials shortly")
         if ok:
             try:
                 do_login(email, password)
@@ -511,8 +511,6 @@ with tab1:
 with tab2:
     st.markdown("### Select project for reporting below ⬇️")
 
-    # Forudsætning: df indeholder dine projekter og har index = projekt_id (uuid)
-    # Hvis ikke, så hent dem her:
     if 'df' not in locals() or df is None or df.empty:
         try:
             proj = supabase.table("Projekt_Data").select("*").execute().data or []
@@ -520,12 +518,12 @@ with tab2:
             if "id" in df.columns:
                 df = df.set_index("id")
         except Exception as e:
-            st.error(f"Kunne ikke hente projekter: {e}")
+            st.error(f"Could not retrieve projects: {e}")
             st.stop()
 
     # Simpel selector
     if df.empty:
-        st.info("Ingen projekter fundet.")
+        st.info("No projects found.")
         st.stop()
 
     # Vælg visningskolonne til label i selectbox (brug det du har)
@@ -601,3 +599,4 @@ if st.button("Sign out 👋"):
     logout()
     st.query_params.clear()
     rerun()
+
